@@ -1,0 +1,20 @@
+# PDF generado (se compila desde draft.tex)
+draft.pdf
+
+# Entorno virtual de Python (pesado y específico de la máquina)
+.venv/
+
+# Artefactos de compilación LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Python
+__pycache__/
+*.pyc
