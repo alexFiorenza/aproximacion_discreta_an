@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aproximación discreta por mínimos cuadrados — TP Análisis Numérico</title>
+
+<!-- MathJax (necesita conexión a internet para renderizar las fórmulas) -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(', '\\)'], ['$', '$']],
+    displayMath: [['\\[', '\\]'], ['$$', '$$']]
+  },
+  svg: { fontCache: 'global', scale: 1.0 },
+  startup: {
+    ready: () => {
+      MathJax.startup.defaultReady();
+    }
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --utn-blue:    #003A70;
+  --utn-blue-2:  #0A5099;
+  --utn-blue-3:  #1F6FC2;
+  --soft-blue:   #EAF3FF;
+  --ink:         #15202e;
+  --muted:       #5b6b7f;
+  --line:        #d7e1ec;
+  --bg:          #f4f7fb;
+  --card:        #ffffff;
+
+  --lin:  #D55E00;
+  --cua:  #009E73;
+  --exp:  #CC79A7;
+
+  /* colores por expositor */
+  --p-alex:   #003A70;
+  --p-vale:   #009E73;
+  --p-juan:   #D55E00;
+  --p-fran:   #B0468C;
+  --p-franco: #C28A00;
+  --p-feli:   #5A4FCF;
+
+  --stage-w: 1280px;
+  --stage-h: 720px;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+
+html,body{
+  height:100%;
+  background:#0a1622;
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  color:var(--ink);
+  overflow:hidden;
+}
+
+/* ---------- Escenario / escalado ---------- */
+#viewport{
+  position:fixed; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  background:
+    radial-gradient(1200px 700px at 50% -10%, #122b46 0%, #0a1622 60%);
+}
+#stage{
+  width:var(--stage-w); height:var(--stage-h);
+  position:relative;
+  transform-origin:center center;
+}
+
+/* ---------- Slides ---------- */
+.slide{
+  position:absolute; inset:0;
+  background:var(--bg);
+  border-radius:18px;
+  overflow:hidden;
+  display:none;
+  box-shadow:0 30px 80px rgba(0,0,0,.45);
+}
+.slide.active{ display:block; }
+.slide.is-next{ animation:slideIn .42s cubic-bezier(.22,.61,.36,1); }
+.slide.is-prev{ animation:slideInBack .42s cubic-bezier(.22,.61,.36,1); }
+@keyframes slideIn{ from{ opacity:0; transform:translateX(34px);} to{opacity:1;transform:none;} }
+@keyframes slideInBack{ from{ opacity:0; transform:translateX(-34px);} to{opacity:1;transform:none;} }
+
+.inner{
+  position:absolute; inset:0;
+  padding:54px 64px 70px;
+  display:flex; flex-direction:column;
+}
+
+/* ---------- Cabecera de slide ---------- */
+.head{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:22px;
+}
+.kicker{
+  font-size:14px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--utn-blue-2);
+  display:flex; align-items:center; gap:10px;
+}
+.kicker .dot{ width:9px; height:9px; border-radius:50%; background:currentColor; }
+.presenter{
+  display:flex; align-items:center; gap:9px;
+  font-size:13px; font-weight:700;
+  padding:7px 14px 7px 9px; border-radius:999px;
+  background:#fff; border:1px solid var(--line);
+  color:var(--ink);
+  box-shadow:0 2px 6px rgba(20,40,70,.06);
+}
+.presenter .pin{
+  width:22px; height:22px; border-radius:50%;
+  background:var(--accent,#003A70); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:800;
+}
+.presenter .role{ color:var(--muted); font-weight:600; }
+
+h2.title{
+  font-size:38px; font-weight:800; line-height:1.1; color:var(--utn-blue);
+  letter-spacing:-.01em;
+}
+h2.title .accent{ color:var(--accent,var(--utn-blue)); }
+.subtitle{ font-size:18px; color:var(--muted); margin-top:8px; font-weight:500; }
+
+.body{ flex:1; display:flex; flex-direction:column; justify-content:center; min-height:0; }
+
+/* barra de acento lateral según expositor */
+.slide::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:8px;
+  background:var(--accent,var(--utn-blue));
+}
+
+/* ---------- Tipografía utilitaria ---------- */
+.lead{ font-size:21px; line-height:1.5; color:#26384c; }
+ul.points{ list-style:none; display:flex; flex-direction:column; gap:16px; }
+ul.points li{
+  position:relative; padding-left:34px; font-size:19.5px; line-height:1.45; color:#26384c;
+}
+ul.points li::before{
+  content:""; position:absolute; left:4px; top:9px;
+  width:12px; height:12px; border-radius:3px; background:var(--accent,var(--utn-blue));
+  transform:rotate(45deg);
+}
+ul.points li b{ color:var(--utn-blue); font-weight:700; }
+.hl{ color:var(--accent,var(--utn-blue)); font-weight:700; }
+.mono{ font-family:'Spline Sans Mono',monospace; }
+
+/* ---------- Cajas / grids ---------- */
+.cols{ display:grid; gap:26px; }
+.cols.c2{ grid-template-columns:1fr 1fr; }
+.cols.c3{ grid-template-columns:repeat(3,1fr); }
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:14px;
+  padding:22px 24px;
+  box-shadow:0 4px 16px rgba(20,40,70,.05);
+}
+.card h3{
+  font-size:15px; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--utn-blue-2); margin-bottom:12px; font-weight:700;
+  display:flex; align-items:center; gap:8px;
+}
+.card p{ font-size:17px; line-height:1.5; color:#33455a; }
+.card .big{ font-size:30px; font-weight:800; color:var(--utn-blue); }
+
+.note{
+  background:var(--soft-blue); border:1px solid #cfe1f7; border-left:5px solid var(--utn-blue);
+  border-radius:10px; padding:16px 20px; font-size:17px; line-height:1.5; color:#1e3450;
+}
+.note b{ color:var(--utn-blue); }
+
+.formula{
+  background:#fff; border:1px solid var(--line); border-radius:12px;
+  padding:14px 20px; font-size:20px; color:var(--ink);
+  box-shadow:0 3px 12px rgba(20,40,70,.05);
+}
+.formula.tight{ padding:6px 18px; }
+
+/* chips de métrica */
+.stat{
+  display:flex; flex-direction:column; gap:4px;
+  background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px 20px;
+  box-shadow:0 3px 12px rgba(20,40,70,.05);
+}
+.stat .v{ font-size:34px; font-weight:800; color:var(--utn-blue); line-height:1; }
+.stat .v small{ font-size:17px; font-weight:600; color:var(--muted); }
+.stat .k{ font-size:14px; color:var(--muted); font-weight:600; letter-spacing:.02em; }
+
+/* figuras */
+.figwrap{
+  flex:1; display:flex; align-items:center; justify-content:center;
+  background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px;
+  min-height:0; box-shadow:0 4px 16px rgba(20,40,70,.05);
+}
+.figwrap img{ max-width:100%; max-height:100%; object-fit:contain; border-radius:6px; }
+.figcap{ text-align:center; font-size:14px; color:var(--muted); margin-top:10px; }
+
+/* tablas */
+table.data{ width:100%; border-collapse:collapse; font-size:16.5px; }
+table.data th, table.data td{ padding:9px 14px; text-align:right; }
+table.data th:first-child, table.data td:first-child{ text-align:left; }
+table.data thead th{
+  color:var(--utn-blue-2); border-bottom:2px solid var(--utn-blue);
+  font-size:13.5px; text-transform:uppercase; letter-spacing:.05em;
+}
+table.data tbody tr{ border-bottom:1px solid var(--line); }
+table.data tbody tr:last-child{ border-bottom:none; }
+table.data tr.hl-row{ background:var(--soft-blue); font-weight:700; color:var(--utn-blue); }
+table.data .mono{ font-family:'Spline Sans Mono',monospace; }
+.tag-lin{ color:var(--lin); font-weight:700; }
+.tag-cua{ color:var(--cua); font-weight:700; }
+.tag-exp{ color:var(--exp); font-weight:700; }
+
+/* ---------- Slide portada / divisor / cierre (oscuras) ---------- */
+.slide.dark{ background:
+   radial-gradient(900px 600px at 80% -10%, #0d4a86 0%, transparent 55%),
+   linear-gradient(135deg, #022647 0%, #003A70 45%, #0a1622 100%); }
+.slide.dark::before{ background:linear-gradient(var(--cua),var(--utn-blue-3)); width:8px; }
+.slide.dark .inner{ color:#eaf3ff; }
+
+.cover-badge{
+  display:inline-flex; align-items:center; gap:10px;
+  font-size:13px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+  color:#9fc4ec; border:1px solid rgba(159,196,236,.4); border-radius:999px;
+  padding:8px 16px; margin-bottom:auto;
+}
+.cover-main{ margin-top:auto; }
+.cover-main h1{
+  font-size:54px; font-weight:900; color:#fff; line-height:1.05; letter-spacing:-.015em;
+  max-width:980px;
+}
+.cover-main .sub{ font-size:23px; color:#bcd6f3; margin-top:18px; font-weight:500; max-width:840px; }
+.cover-meta{
+  margin-top:30px; display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center;
+}
+.member{
+  font-size:15px; color:#dbe9fa; background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.14); border-radius:999px; padding:7px 15px;
+  font-weight:500;
+}
+.member b{ color:#fff; font-weight:700; }
+.cover-foot{
+  margin-top:26px; font-size:15px; color:#8fb3da; display:flex; gap:18px; flex-wrap:wrap;
+  border-top:1px solid rgba(255,255,255,.12); padding-top:18px;
+}
+
+/* agenda */
+.agenda{ display:flex; flex-direction:column; gap:11px; }
+.agenda-row{
+  display:flex; align-items:center; gap:18px;
+  background:#fff; border:1px solid var(--line); border-radius:12px; padding:13px 20px;
+  box-shadow:0 3px 10px rgba(20,40,70,.04);
+}
+.agenda-row .pin{
+  width:34px; height:34px; border-radius:50%; flex:none;
+  background:var(--accent); color:#fff; font-weight:800; font-size:14px;
+  display:flex; align-items:center; justify-content:center;
+}
+.agenda-row .who{ font-weight:700; color:var(--ink); font-size:17px; min-width:235px; }
+.agenda-row .what{ color:var(--muted); font-size:16px; }
+
+/* divisor */
+.divider .inner{ justify-content:center; }
+.divider .step{ font-size:20px; font-weight:700; letter-spacing:.2em; color:#7fb0e0; text-transform:uppercase; }
+.divider h1{ font-size:50px; font-weight:900; color:#fff; margin-top:14px; line-height:1.06; max-width:900px; }
+.divider .pres{
+  margin-top:26px; display:inline-flex; align-items:center; gap:14px;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18);
+  border-radius:999px; padding:10px 20px 10px 12px;
+}
+.divider .pres .pin{
+  width:38px;height:38px;border-radius:50%;background:var(--accent);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;
+}
+.divider .pres .nm{ color:#fff; font-weight:700; font-size:18px; }
+
+/* ---------- Controles globales ---------- */
+#bar{
+  position:fixed; top:0; left:0; height:4px; background:var(--utn-blue-3);
+  z-index:50; transition:width .35s ease; box-shadow:0 0 12px rgba(31,111,194,.6);
+}
+#hud{
+  position:fixed; bottom:18px; right:24px; z-index:50;
+  display:flex; align-items:center; gap:14px;
+  color:#9fc4ec; font-size:13px; font-weight:600;
+}
+#hud .count{ font-family:'Spline Sans Mono',monospace; }
+#hud .nav{ display:flex; gap:6px; }
+#hud button{
+  width:30px; height:30px; border-radius:8px; border:1px solid rgba(159,196,236,.35);
+  background:rgba(255,255,255,.05); color:#cfe2f6; cursor:pointer; font-size:15px;
+  display:flex; align-items:center; justify-content:center; transition:.15s;
+}
+#hud button:hover{ background:rgba(255,255,255,.14); }
+#tip{
+  position:fixed; bottom:18px; left:24px; z-index:50;
+  color:#5e7d9c; font-size:12.5px; font-weight:500;
+}
+#tip kbd{
+  font-family:'Spline Sans Mono',monospace; background:rgba(255,255,255,.08);
+  border:1px solid rgba(159,196,236,.25); border-radius:5px; padding:1px 6px; color:#9fc4ec;
+}
+.slide-foot{
+  position:absolute; left:64px; right:64px; bottom:24px;
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:12.5px; color:var(--muted); font-weight:500;
+  border-top:1px solid var(--line); padding-top:12px;
+}
+.slide.dark .slide-foot{ display:none; }
+.slide-foot .sec{ color:var(--utn-blue-2); font-weight:700; }
+
+/* Nombres de expositor ocultos por ahora (divisiones sin asignar todavía).
+   Para reactivarlos, borrar estas tres reglas. */
+.presenter{ display:none !important; }
+.divider .pres{ display:none !important; }
+.agenda-row .who{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div id="bar"></div>
+
+<div id="viewport">
+  <div id="stage">
+
+    <!-- ============================ 1 · PORTADA ============================ -->
+    <section class="slide dark active" data-accent="--p-alex">
+      <div class="inner">
+        <span class="cover-badge"><span>●</span> UTN FRBA · Análisis Numérico · 2026</span>
+        <div class="cover-main">
+          <h1>Aproximación discreta por mínimos cuadrados</h1>
+          <p class="sub">Demanda prioritaria de gas natural en función de la temperatura media diaria</p>
+          <div class="cover-meta">
+            <span class="member"><b>Alex Fiorenza</b></span>
+            <span class="member"><b>Valentina Verón</b></span>
+            <span class="member"><b>Juan Francisco Aldaco</b></span>
+            <span class="member"><b>Francisco F. García</b></span>
+            <span class="member"><b>Franco U. Schendel</b></span>
+            <span class="member"><b>Felipe Fernández Presedo</b></span>
+          </div>
+          <div class="cover-foot">
+            <span>★ Datos reales: ENARGAS + Servicio Meteorológico Nacional</span>
+            <span>n = 351 observaciones · jun 2025 – may 2026</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ 2 · TEMARIO ============================ -->
+    <section class="slide" data-accent="--p-alex">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Temario</span>
+        </div>
+        <h2 class="title">Contenidos de la presentación</h2>
+        <div class="body">
+          <div class="agenda">
+            <div class="agenda-row" style="--accent:var(--utn-blue)">
+              <span class="pin">1</span>
+              <span class="what">Contexto, motivación y construcción de los datasets</span>
+            </div>
+            <div class="agenda-row" style="--accent:var(--utn-blue)">
+              <span class="pin">2</span>
+              <span class="what">Método de mínimos cuadrados · nube de puntos · modelo lineal</span>
+            </div>
+            <div class="agenda-row" style="--accent:var(--utn-blue)">
+              <span class="pin">3</span>
+              <span class="what">Modelo cuadrático: ecuaciones normales y resolución</span>
+            </div>
+            <div class="agenda-row" style="--accent:var(--utn-blue)">
+              <span class="pin">4</span>
+              <span class="what">Modelo exponencial vía transformación logarítmica</span>
+            </div>
+            <div class="agenda-row" style="--accent:var(--utn-blue)">
+              <span class="pin">5</span>
+              <span class="what">Comparación de modelos: métricas y análisis de residuos</span>
+            </div>
+            <div class="agenda-row" style="--accent:var(--utn-blue)">
+              <span class="pin">6</span>
+              <span class="what">Estimación final, confiabilidad y conclusiones</span>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Temario</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 3 · POR QUÉ ============================ -->
+    <section class="slide" data-accent="--p-alex">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Motivación</span>
+          <span class="presenter" style="--accent:var(--p-alex)"><span class="pin">AF</span> Alex Fiorenza</span>
+        </div>
+        <h2 class="title">¿Por qué elegimos este problema?</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:18px;justify-content:center">
+              <ul class="points">
+                <li>El consumo de gas tiene una relación <b>física e intuitiva</b> con el clima: en invierno se prende la calefacción.</li>
+                <li>Es un <b>problema de aproximación</b> ideal: hay dispersión, pero una tendencia clara que pide una curva.</li>
+                <li>Permite comparar <b>varios modelos</b> (lineal, cuadrático, exponencial) sobre los mismos datos.</li>
+              </ul>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="note">
+                <b>La hipótesis.</b> A menor temperatura media diaria, mayor demanda
+                de gas natural. Buscamos una función \(D \approx f(T)\) que capture esa relación.
+              </div>
+              <div class="cols c2" style="gap:14px">
+                <div class="stat"><span class="v">2</span><span class="k">fuentes públicas oficiales</span></div>
+                <div class="stat"><span class="v">3</span><span class="k">modelos ajustados y comparados</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Motivación</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 4 · PROBLEMA ============================ -->
+    <section class="slide" data-accent="--p-alex">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> El problema</span>
+          <span class="presenter" style="--accent:var(--p-alex)"><span class="pin">AF</span> Alex Fiorenza</span>
+        </div>
+        <h2 class="title">El problema y el objetivo</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="card">
+                <h3>Variables</h3>
+                <p style="margin-bottom:6px">Independiente — <b>temperatura media diaria</b> \(x_i = T_i\) [°C]</p>
+                <p>Dependiente — <b>demanda prioritaria</b> de gas \(y_i = D_i\) [MM m³/día]</p>
+              </div>
+              <div class="card">
+                <h3>Datos</h3>
+                <p>Pares discretos observados:</p>
+                <div class="formula tight">\[(T_1,D_1),(T_2,D_2),\dots,(T_n,D_n)\]</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:18px;justify-content:center">
+              <div class="lead">Encontrar una función aproximante</div>
+              <div class="formula" style="text-align:center;font-size:26px">\[ D \approx f(T) \]</div>
+              <div class="lead">que permita <span class="hl">estimar la demanda</span> para una temperatura
+                \(T_0\) no observada directamente.</div>
+              <div class="note">
+                <b>Caso a estimar:</b> demanda para \(T_0 = 8\,^\circ\mathrm{C}\). Debe caer dentro del
+                rango observado para que sea una <b>interpolación</b>.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">El problema</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 5 · FUENTES ============================ -->
+    <section class="slide" data-accent="--p-alex">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Datos · Fuentes</span>
+          <span class="presenter" style="--accent:var(--p-alex)"><span class="pin">AF</span> Alex Fiorenza</span>
+        </div>
+        <h2 class="title">Dos fuentes reales, cruzadas por fecha</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div class="card" style="border-top:4px solid var(--utn-blue)">
+              <h3>① Demanda — ENARGAS</h3>
+              <p style="margin-bottom:10px"><span class="mono">datos_enargas.csv</span><br>
+                Demanda prioritaria por <b>licenciataria</b> y fecha.</p>
+              <p>Para el AMBA sumamos las dos distribuidoras que abastecen la región:</p>
+              <div class="formula tight" style="margin-top:8px">\[ D = D_{\text{MetroGAS}} + D_{\text{Naturgy BAN}} \]</div>
+            </div>
+            <div class="card" style="border-top:4px solid var(--cua)">
+              <h3>② Temperatura — SMN</h3>
+              <p style="margin-bottom:10px"><span class="mono">registro_temperatura365d_smn.txt</span><br>
+                \(T_{\max}\) y \(T_{\min}\) diarias por estación.</p>
+              <p>Temperatura media de cada estación:</p>
+              <div class="formula tight" style="margin-top:8px">\[ T_{\text{media}} = \frac{T_{\max}+T_{\min}}{2} \]</div>
+            </div>
+          </div>
+          <div class="note" style="margin-top:20px">
+            <b>Criterio geográfico.</b> Usamos el AMBA en <i>ambas</i> variables para que la temperatura
+            y la demanda describan la <b>misma región</b>: no mezclamos clima local con consumo nacional.
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Datos · Fuentes</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 6 · CONSTRUCCIÓN DATASET ============================ -->
+    <section class="slide" data-accent="--p-alex">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Datos · Construcción</span>
+          <span class="presenter" style="--accent:var(--p-alex)"><span class="pin">AF</span> Alex Fiorenza</span>
+        </div>
+        <h2 class="title">Cómo se calculó el dataset final</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:14px;justify-content:center">
+              <ul class="points">
+                <li><b>Temperatura del GBA:</b> promedio de \((T_{\max}+T_{\min})/2\) sobre <b>8 estaciones</b> del AMBA (Aeroparque, Observatorio, Ezeiza, El Palomar, Morón, San Fernando, Campo de Mayo y La Plata).</li>
+                <li><b>Demanda del GBA:</b> suma de MetroGAS + Naturgy BAN por fecha.</li>
+                <li><b>Cruce por fecha:</b> se conservan solo los días con <b>registro completo</b> en ambas fuentes.</li>
+              </ul>
+              <div class="note">Resultado: <b>n = 351</b> observaciones válidas, de jun-2025 a may-2026.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;justify-content:center">
+              <div class="card" style="padding:14px 18px">
+                <h3>Muestra del dataset</h3>
+                <table class="data">
+                  <thead><tr><th>Fecha</th><th>T (°C)</th><th>D (MM m³/d)</th></tr></thead>
+                  <tbody>
+                    <tr><td class="mono">2025-06-15</td><td class="mono">7,75</td><td class="mono">22,95</td></tr>
+                    <tr><td class="mono">2025-07-17</td><td class="mono">8,12</td><td class="mono">26,48</td></tr>
+                    <tr><td class="mono">2025-09-18</td><td class="mono">19,44</td><td class="mono">9,57</td></tr>
+                    <tr><td class="mono">2025-12-23</td><td class="mono">25,79</td><td class="mono">5,22</td></tr>
+                    <tr><td class="mono">2026-01-24</td><td class="mono">27,14</td><td class="mono">5,02</td></tr>
+                    <tr><td class="mono">2026-05-31</td><td class="mono">10,82</td><td class="mono">18,74</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="cols c3" style="gap:12px">
+                <div class="stat"><span class="v">351</span><span class="k">observaciones</span></div>
+                <div class="stat"><span class="v">3,1<small>–31,3</small></span><span class="k">rango de T (°C)</span></div>
+                <div class="stat"><span class="v">12,0</span><span class="k">demanda media</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Datos · Construcción</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 7 · DIVISOR VALENTINA ============================ -->
+    <section class="slide dark divider" data-accent="--p-vale">
+      <div class="inner">
+        <span class="step">Parte 2 de 6</span>
+        <h1>Método de mínimos cuadrados<br>y modelo lineal</h1>
+        <div class="pres" style="--accent:var(--p-vale)"><span class="pin">VV</span><span class="nm">Valentina Verón</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 8 · MÉTODO MÍNIMOS CUADRADOS ============================ -->
+    <section class="slide" data-accent="--p-vale">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Método</span>
+          <span class="presenter" style="--accent:var(--p-vale)"><span class="pin">VV</span> Valentina Verón</span>
+        </div>
+        <h2 class="title">El método de mínimos cuadrados</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:18px;justify-content:center">
+              <div class="lead">Buscamos los parámetros del modelo que <span class="hl">minimizan la suma de los cuadrados de los errores</span> entre lo observado y lo predicho.</div>
+              <div class="formula" style="text-align:center">\[ S = \sum_{i=1}^{n}\big[D_i - f(T_i)\big]^2 \]</div>
+              <ul class="points">
+                <li>Derivamos \(S\) respecto de cada parámetro y la igualamos a cero.</li>
+                <li>Eso genera el sistema de <b>ecuaciones normales</b>, lineal en los coeficientes.</li>
+              </ul>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="card">
+                <h3>Condición de mínimo</h3>
+                <div class="formula tight" style="border:none;box-shadow:none;padding:4px 0">\[ \frac{\partial S}{\partial a}=0,\quad \frac{\partial S}{\partial b}=0,\ \dots \]</div>
+              </div>
+              <div class="note">Se aplica el mismo esquema a los tres modelos. La única diferencia es <b>cuántos parámetros</b> tiene cada uno y, por lo tanto, el tamaño del sistema.</div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Método</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 9 · NUBE DE PUNTOS ============================ -->
+    <section class="slide" data-accent="--p-vale">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Datos observados</span>
+          <span class="presenter" style="--accent:var(--p-vale)"><span class="pin">VV</span> Valentina Verón</span>
+        </div>
+        <h2 class="title">Nube de puntos: ¿qué nos dicen los datos?</h2>
+        <div class="body" style="flex-direction:row;gap:24px">
+          <div class="figwrap" style="flex:1.6">
+            <img src="figures/nube_puntos.png" alt="Nube de puntos demanda vs temperatura">
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:14px;justify-content:center">
+            <ul class="points">
+              <li>Relación claramente <b>decreciente</b>: más frío ⇒ más gas.</li>
+              <li>La caída <b>no es recta</b>: se aplana a temperaturas altas.</li>
+              <li>Eso sugiere probar un modelo <b>curvo</b> además del lineal.</li>
+            </ul>
+            <div class="note">La forma de la nube es la que justifica ajustar también un modelo cuadrático y uno exponencial.</div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Datos observados</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 10 · LINEAL PLANTEO ============================ -->
+    <section class="slide" data-accent="--p-vale">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Modelo lineal</span>
+          <span class="presenter" style="--accent:var(--p-vale)"><span class="pin">VV</span> Valentina Verón</span>
+        </div>
+        <h2 class="title">Modelo lineal — ecuaciones normales</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="formula" style="text-align:center;font-size:23px">\[ f_1(T) = a + bT \]</div>
+              <div class="lead" style="font-size:19px">Minimizamos \(S(a,b)=\sum\big[D_i-(a+bT_i)\big]^2\) y obtenemos un sistema \(2\times 2\):</div>
+              <div class="formula" style="text-align:center">
+                \[\begin{cases} na + b\sum T_i = \sum D_i \\[2pt] a\sum T_i + b\sum T_i^2 = \sum T_iD_i \end{cases}\]
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="card">
+                <h3>En forma matricial</h3>
+                <div class="formula tight" style="border:none;box-shadow:none;padding:4px 0;text-align:center">
+                  \[\begin{bmatrix} n & \sum T_i \\ \sum T_i & \sum T_i^2 \end{bmatrix}
+                    \begin{bmatrix} a \\ b \end{bmatrix} =
+                    \begin{bmatrix} \sum D_i \\ \sum T_iD_i \end{bmatrix}\]
+                </div>
+              </div>
+              <div class="card" style="padding:14px 20px">
+                <h3>Sumas calculadas (n = 351)</h3>
+                <table class="data">
+                  <tbody>
+                    <tr><td>\(\sum T_i\)</td><td class="mono">6.250,89</td><td>\(\sum D_i\)</td><td class="mono">4.213,72</td></tr>
+                    <tr><td>\(\sum T_i^2\)</td><td class="mono">123.882,34</td><td>\(\sum T_iD_i\)</td><td class="mono">61.546,62</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Modelo lineal</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 11 · LINEAL RESULTADO ============================ -->
+    <section class="slide" data-accent="--p-vale">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Modelo lineal</span>
+          <span class="presenter" style="--accent:var(--p-vale)"><span class="pin">VV</span> Valentina Verón</span>
+        </div>
+        <h2 class="title">Modelo lineal — resolución</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="card">
+                <h3>Sistema sustituido</h3>
+                <div class="formula tight" style="border:none;box-shadow:none;padding:4px 0;text-align:center">
+                  \[\begin{bmatrix} 351 & 6.250{,}89 \\ 6.250{,}89 & 123.882{,}34 \end{bmatrix}
+                    \begin{bmatrix} a \\ b \end{bmatrix} =
+                    \begin{bmatrix} 4.213{,}72 \\ 61.546{,}62 \end{bmatrix}\]
+                </div>
+              </div>
+              <div class="cols c2" style="gap:14px">
+                <div class="stat" style="--accent:var(--lin)"><span class="v" style="color:var(--lin)">31,14</span><span class="k">coeficiente a</span></div>
+                <div class="stat"><span class="v" style="color:var(--lin)">−1,074</span><span class="k">coeficiente b</span></div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:18px;justify-content:center">
+              <div class="lead">Resolviendo el sistema obtenemos la recta aproximante:</div>
+              <div class="formula" style="text-align:center;font-size:24px;border-color:var(--lin)">
+                \[ f_1(T) = 31{,}14 - 1{,}074\,T \]
+              </div>
+              <div class="note">La pendiente negativa confirma la intuición: cada grado adicional reduce la demanda en ≈ 1,07 MM m³/día. Pero ¿es una recta suficiente? Lo veremos en los residuos.</div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Modelo lineal</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 12 · DIVISOR JUAN ============================ -->
+    <section class="slide dark divider" data-accent="--p-juan">
+      <div class="inner">
+        <span class="step">Parte 3 de 6</span>
+        <h1>Modelo cuadrático</h1>
+        <div class="pres" style="--accent:var(--p-juan)"><span class="pin">JA</span><span class="nm">Juan Francisco Aldaco</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 13 · CUADRÁTICO PLANTEO ============================ -->
+    <section class="slide" data-accent="--p-juan">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Modelo cuadrático</span>
+          <span class="presenter" style="--accent:var(--p-juan)"><span class="pin">JA</span> Juan Francisco Aldaco</span>
+        </div>
+        <h2 class="title">Modelo cuadrático — planteo</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="formula" style="text-align:center;font-size:23px">\[ f_2(T) = a + bT + cT^2 \]</div>
+              <div class="lead" style="font-size:19px">Un parámetro más ⇒ sistema de ecuaciones normales \(3\times 3\):</div>
+              <div class="formula" style="text-align:center;font-size:18px">
+                \[\begin{cases} na + b\sum T_i + c\sum T_i^2 = \sum D_i \\[2pt]
+                  a\sum T_i + b\sum T_i^2 + c\sum T_i^3 = \sum T_iD_i \\[2pt]
+                  a\sum T_i^2 + b\sum T_i^3 + c\sum T_i^4 = \sum T_i^2 D_i \end{cases}\]
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="card">
+                <h3>En forma matricial</h3>
+                <div class="formula tight" style="border:none;box-shadow:none;padding:4px 0;text-align:center;font-size:18px">
+                  \[\begin{bmatrix} n & \sum T_i & \sum T_i^2 \\ \sum T_i & \sum T_i^2 & \sum T_i^3 \\ \sum T_i^2 & \sum T_i^3 & \sum T_i^4 \end{bmatrix}
+                    \begin{bmatrix} a \\ b \\ c \end{bmatrix} =
+                    \begin{bmatrix} \sum D_i \\ \sum T_iD_i \\ \sum T_i^2 D_i \end{bmatrix}\]
+                </div>
+              </div>
+              <div class="card" style="padding:14px 20px">
+                <h3>Sumas adicionales</h3>
+                <table class="data">
+                  <tbody>
+                    <tr><td>\(\sum T_i^3\)</td><td class="mono">2.644.334,76</td></tr>
+                    <tr><td>\(\sum T_i^4\)</td><td class="mono">59.479.524,45</td></tr>
+                    <tr><td>\(\sum T_i^2 D_i\)</td><td class="mono">1.041.768,03</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Modelo cuadrático</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 14 · CUADRÁTICO RESULTADO ============================ -->
+    <section class="slide" data-accent="--p-juan">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Modelo cuadrático</span>
+          <span class="presenter" style="--accent:var(--p-juan)"><span class="pin">JA</span> Juan Francisco Aldaco</span>
+        </div>
+        <h2 class="title">Modelo cuadrático — resolución</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:14px;justify-content:center">
+              <div class="card">
+                <h3>Sistema 3×3 sustituido</h3>
+                <div class="formula tight" style="border:none;box-shadow:none;padding:4px 0;text-align:center;font-size:15px">
+                  \[\begin{bmatrix} 351 & 6.250{,}89 & 123.882{,}34 \\ 6.250{,}89 & 123.882{,}34 & 2.644.334{,}76 \\ 123.882{,}34 & 2.644.334{,}76 & 59.479.524{,}45 \end{bmatrix}
+                    \begin{bmatrix} a \\ b \\ c \end{bmatrix} =
+                    \begin{bmatrix} 4.213{,}72 \\ 61.546{,}62 \\ 1.041.768{,}03 \end{bmatrix}\]
+                </div>
+              </div>
+              <div class="cols c3" style="gap:12px">
+                <div class="stat"><span class="v" style="color:var(--cua)">45,42</span><span class="k">a</span></div>
+                <div class="stat"><span class="v" style="color:var(--cua)">−2,931</span><span class="k">b</span></div>
+                <div class="stat"><span class="v" style="color:var(--cua)">0,0532</span><span class="k">c</span></div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:18px;justify-content:center">
+              <div class="lead">La parábola aproximante resulta:</div>
+              <div class="formula" style="text-align:center;font-size:22px;border-color:var(--cua)">
+                \[ f_2(T) = 45{,}42 - 2{,}931\,T + 0{,}0532\,T^2 \]
+              </div>
+              <div class="note">El término \(cT^2 &gt; 0\) le da concavidad: ajusta mucho mejor la curva que se aplana en temperaturas altas. Spoiler: será el modelo seleccionado.</div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Modelo cuadrático</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 15 · DIVISOR FRANCISCO ============================ -->
+    <section class="slide dark divider" data-accent="--p-fran">
+      <div class="inner">
+        <span class="step">Parte 4 de 6</span>
+        <h1>Modelo exponencial</h1>
+        <div class="pres" style="--accent:var(--p-fran)"><span class="pin">FG</span><span class="nm">Francisco F. García</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 16 · EXP LINEALIZACIÓN ============================ -->
+    <section class="slide" data-accent="--p-fran">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Modelo exponencial</span>
+          <span class="presenter" style="--accent:var(--p-fran)"><span class="pin">FG</span> Francisco F. García</span>
+        </div>
+        <h2 class="title">El modelo no polinómico: linealización</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="formula" style="text-align:center;font-size:23px">\[ f_3(T) = A\,e^{BT} \]</div>
+              <div class="lead" style="font-size:19px">No es lineal en sus parámetros ⇒ aplicamos logaritmo natural para <b>linealizarlo</b>:</div>
+              <div class="formula" style="text-align:center">
+                \[ \ln D = \ln A + BT \]
+              </div>
+              <div class="lead" style="font-size:18px">Con \(Y=\ln D\) y \(\alpha = \ln A\) queda un ajuste lineal sobre \((T_i, Y_i)\):</div>
+              <div class="formula tight" style="text-align:center">\[ Y = \alpha + BT \]</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="card">
+                <h3>Ecuaciones normales (2×2)</h3>
+                <div class="formula tight" style="border:none;box-shadow:none;padding:4px 0;text-align:center">
+                  \[\begin{bmatrix} n & \sum T_i \\ \sum T_i & \sum T_i^2 \end{bmatrix}
+                    \begin{bmatrix} \alpha \\ B \end{bmatrix} =
+                    \begin{bmatrix} \sum Y_i \\ \sum T_iY_i \end{bmatrix}\]
+                </div>
+              </div>
+              <div class="card" style="padding:14px 20px">
+                <h3>Sumas con \(Y_i = \ln D_i\)</h3>
+                <table class="data">
+                  <tbody>
+                    <tr><td>\(\sum Y_i\)</td><td class="mono">814,2272</td></tr>
+                    <tr><td>\(\sum T_i Y_i\)</td><td class="mono">13.397,9888</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Modelo exponencial</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 17 · EXP RESULTADO ============================ -->
+    <section class="slide" data-accent="--p-fran">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Modelo exponencial</span>
+          <span class="presenter" style="--accent:var(--p-fran)"><span class="pin">FG</span> Francisco F. García</span>
+        </div>
+        <h2 class="title">Modelo exponencial — resolución</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="card">
+                <h3>Coeficientes del ajuste lineal</h3>
+                <div class="cols c2" style="gap:12px;margin-top:4px">
+                  <div class="stat"><span class="v" style="color:var(--exp)">3,883</span><span class="k">α = ln A</span></div>
+                  <div class="stat"><span class="v" style="color:var(--exp)">−0,0878</span><span class="k">B</span></div>
+                </div>
+                <p style="margin-top:14px">Deshacemos el logaritmo: \(A = e^{\alpha}\)</p>
+                <div class="formula tight" style="margin-top:6px;text-align:center">\[ A = e^{3{,}883} = 48{,}55 \]</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:18px;justify-content:center">
+              <div class="lead">La función exponencial aproximante queda:</div>
+              <div class="formula" style="text-align:center;font-size:24px;border-color:var(--exp)">
+                \[ f_3(T) = 48{,}55\,e^{-0{,}0878\,T} \]
+              </div>
+              <div class="note">Ventaja física: es <b>siempre positiva</b> y <b>monótona decreciente</b>. Nunca predice demanda negativa, a diferencia de la recta y de la parábola en los extremos.</div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Modelo exponencial</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 18 · DIVISOR FRANCO ============================ -->
+    <section class="slide dark divider" data-accent="--p-franco">
+      <div class="inner">
+        <span class="step">Parte 5 de 6</span>
+        <h1>Comparación de modelos</h1>
+        <div class="pres" style="--accent:var(--p-franco)"><span class="pin">FS</span><span class="nm">Franco U. Schendel</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 19 · MÉTRICAS ============================ -->
+    <section class="slide" data-accent="--p-franco">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Comparación</span>
+          <span class="presenter" style="--accent:var(--p-franco)"><span class="pin">FS</span> Franco U. Schendel</span>
+        </div>
+        <h2 class="title">Métricas de error de los tres modelos</h2>
+        <div class="body">
+          <div class="cols c2" style="grid-template-columns:1.15fr 1fr">
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="card" style="padding:18px 22px">
+                <table class="data">
+                  <thead><tr><th>Modelo</th><th>SSE</th><th>RMSE</th><th>R²</th></tr></thead>
+                  <tbody>
+                    <tr><td class="tag-lin">Lineal</td><td class="mono">3.384,59</td><td class="mono">3,105</td><td class="mono">0,811</td></tr>
+                    <tr class="hl-row"><td>Cuadrático ★</td><td class="mono">2.039,79</td><td class="mono">2,411</td><td class="mono">0,886</td></tr>
+                    <tr><td class="tag-exp">Exponencial</td><td class="mono">2.315,97</td><td class="mono">2,569</td><td class="mono">0,871</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="note">Criterio: <b>menor RMSE</b> y mayor R². Gana el <b>cuadrático</b> (★). El exponencial queda muy cerca.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;justify-content:center">
+              <div class="card"><h3>SSE</h3><p>Suma de los cuadrados de los residuos. Cuanto menor, mejor.</p>
+                <div class="formula tight" style="margin-top:8px;font-size:17px">\[ \textstyle SSE = \sum (D_i - f(T_i))^2 \]</div></div>
+              <div class="card"><h3>RMSE · R²</h3>
+                <div class="formula tight" style="font-size:16px;border:none;box-shadow:none;padding:2px 0">\[ RMSE=\sqrt{\tfrac{SSE}{n}},\quad R^2 = 1-\tfrac{SSE}{\sum (D_i-\bar D)^2} \]</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Comparación</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 20 · MODELOS AJUSTADOS ============================ -->
+    <section class="slide" data-accent="--p-franco">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Comparación</span>
+          <span class="presenter" style="--accent:var(--p-franco)"><span class="pin">FS</span> Franco U. Schendel</span>
+        </div>
+        <h2 class="title">Los tres modelos sobre la nube de puntos</h2>
+        <div class="body" style="flex-direction:row;gap:24px">
+          <div class="figwrap" style="flex:1.7">
+            <img src="figures/modelos_ajustados.png" alt="Modelos ajustados">
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:14px;justify-content:center">
+            <ul class="points">
+              <li>El <span class="tag-lin">lineal</span> no captura la curvatura: sobreestima en el centro.</li>
+              <li><span class="tag-cua">Cuadrático</span> y <span class="tag-exp">exponencial</span> casi se superponen en el rango de los datos.</li>
+              <li>En temperaturas altas la parábola repunta levemente (sin sentido físico); el exponencial sigue bajando.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Comparación</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 21 · RESIDUOS ============================ -->
+    <section class="slide" data-accent="--p-franco">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Comparación · Residuos</span>
+          <span class="presenter" style="--accent:var(--p-franco)"><span class="pin">FS</span> Franco U. Schendel</span>
+        </div>
+        <h2 class="title">Residuos: la prueba decisiva</h2>
+        <div class="body">
+          <div class="figwrap" style="flex:1">
+            <img src="figures/residuos.png" alt="Residuos de los modelos">
+          </div>
+          <div class="note" style="margin-top:16px">
+            El modelo <span class="tag-lin">lineal</span> deja un <b>patrón sistemático en forma de U</b>: prueba de que la relación no es lineal.
+            En el <span class="tag-cua">cuadrático</span> y el <span class="tag-exp">exponencial</span> los residuos se reparten sin estructura alrededor de cero — buena señal de ajuste.
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Comparación · Residuos</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 22 · DIVISOR FELIPE ============================ -->
+    <section class="slide dark divider" data-accent="--p-feli">
+      <div class="inner">
+        <span class="step">Parte 6 de 6</span>
+        <h1>Estimación final<br>y conclusiones</h1>
+        <div class="pres" style="--accent:var(--p-feli)"><span class="pin">FP</span><span class="nm">Felipe Fernández Presedo</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 23 · ESTIMACIÓN ============================ -->
+    <section class="slide" data-accent="--p-feli">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Estimación</span>
+          <span class="presenter" style="--accent:var(--p-feli)"><span class="pin">FP</span> Felipe Fernández Presedo</span>
+        </div>
+        <h2 class="title">Estimación para \(T_0 = 8\,^\circ\mathrm{C}\)</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="lead">Modelo seleccionado: <span class="hl" style="--accent:var(--cua)">cuadrático</span>. Evaluamos en \(T_0 = 8\):</div>
+              <div class="formula" style="text-align:center;font-size:18px">
+                \[ f_2(8) = 45{,}42 - 2{,}931(8) + 0{,}0532(8)^2 \]
+              </div>
+              <div class="formula" style="text-align:center;font-size:26px;border-color:var(--utn-blue);background:var(--soft-blue)">
+                \[ D(T_0) \approx 25{,}37\ \text{MM m}^3/\text{día} \]
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;justify-content:center">
+              <div class="card" style="padding:16px 20px">
+                <h3>Estimación según cada modelo (T₀ = 8 °C)</h3>
+                <table class="data">
+                  <thead><tr><th>Modelo</th><th>D estimada</th></tr></thead>
+                  <tbody>
+                    <tr><td class="tag-lin">Lineal</td><td class="mono">22,54</td></tr>
+                    <tr class="hl-row"><td>Cuadrático ★</td><td class="mono">25,37</td></tr>
+                    <tr><td class="tag-exp">Exponencial</td><td class="mono">24,06</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="note">En \(T_0=8\,^\circ\mathrm{C}\) los modelos curvos casi coinciden: estamos en la zona donde el ajuste es más confiable.</div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Estimación</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 24 · CONFIABILIDAD ============================ -->
+    <section class="slide" data-accent="--p-feli">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Confiabilidad</span>
+          <span class="presenter" style="--accent:var(--p-feli)"><span class="pin">FP</span> Felipe Fernández Presedo</span>
+        </div>
+        <h2 class="title">¿Qué tan confiable es la estimación?</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="card" style="border-left:5px solid var(--cua)">
+                <h3>Es interpolación ✓</h3>
+                <div class="formula tight" style="border:none;box-shadow:none;padding:2px 0;text-align:center">\[ 3{,}11 \le T_0=8 \le 31{,}29 \]</div>
+                <p style="margin-top:8px">\(T_0\) está <b>dentro del rango observado</b> ⇒ interpolación, no extrapolación. Es el escenario más confiable.</p>
+              </div>
+              <div class="card" style="border-left:5px solid var(--cua)">
+                <h3>Buen ajuste local</h3>
+                <p>RMSE bajo (≈ 2,41) y residuos sin patrón cerca de \(T_0\).</p>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;justify-content:center">
+              <div class="note" style="border-left-color:var(--lin);background:#fff4ec;border-color:#f3d6c2">
+                <b>Limitaciones.</b> La demanda no depende solo de la temperatura. También influyen:
+              </div>
+              <ul class="points">
+                <li>Día de la semana y <b>estacionalidad</b>.</li>
+                <li>Feriados y actividad económica.</li>
+                <li>Comportamiento residencial y condiciones operativas del sistema.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Confiabilidad</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 25 · CONCLUSIONES ============================ -->
+    <section class="slide" data-accent="--p-feli">
+      <div class="inner">
+        <div class="head">
+          <span class="kicker"><span class="dot"></span> Conclusiones</span>
+          <span class="presenter" style="--accent:var(--p-feli)"><span class="pin">FP</span> Felipe Fernández Presedo</span>
+        </div>
+        <h2 class="title">Conclusiones</h2>
+        <div class="body">
+          <div class="cols c2">
+            <div style="display:flex;flex-direction:column;gap:14px;justify-content:center">
+              <ul class="points">
+                <li>Aplicamos <b>mínimos cuadrados</b> a datos reales y ajustamos tres modelos: lineal, cuadrático y exponencial.</li>
+                <li>El <b>exponencial</b> cumplió el requisito de modelo no polinómico, resuelto por <b>transformación logarítmica</b>.</li>
+                <li>Por menor RMSE seleccionamos el modelo <span class="hl" style="--accent:var(--cua)">cuadrático</span>.</li>
+                <li>La confiabilidad depende de interpolar dentro del rango y de residuos sin patrón.</li>
+              </ul>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px;justify-content:center">
+              <div class="card" style="text-align:center;border:2px solid var(--cua)">
+                <h3 style="justify-content:center">Modelo seleccionado</h3>
+                <div class="formula tight" style="border:none;box-shadow:none;font-size:20px">\[ f_2(T)=45{,}42 - 2{,}931\,T + 0{,}0532\,T^2 \]</div>
+              </div>
+              <div class="card" style="text-align:center;background:var(--soft-blue);border-color:#bcd6f3">
+                <h3 style="justify-content:center">Demanda estimada en 8 °C</h3>
+                <div class="big" style="font-size:40px">25,37 <span style="font-size:18px;color:var(--muted)">MM m³/día</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-foot"><span class="sec">Conclusiones</span><span>Aproximación discreta por mínimos cuadrados</span></div>
+      </div>
+    </section>
+
+    <!-- ============================ 26 · CIERRE ============================ -->
+    <section class="slide dark divider" data-accent="--p-alex">
+      <div class="inner" style="align-items:flex-start">
+        <span class="step" style="margin-bottom:auto">UTN FRBA · Análisis Numérico · 2026</span>
+        <div style="margin-top:auto">
+          <h1>¡Gracias!</h1>
+          <p class="sub" style="color:#bcd6f3;font-size:21px;margin-top:14px">¿Preguntas?</p>
+          <div class="cover-meta" style="margin-top:24px">
+            <span class="member">Alex Fiorenza</span>
+            <span class="member">Valentina Verón</span>
+            <span class="member">Juan Francisco Aldaco</span>
+            <span class="member">Francisco F. García</span>
+            <span class="member">Franco U. Schendel</span>
+            <span class="member">Felipe Fernández Presedo</span>
+          </div>
+        </div>
+        <div class="cover-foot" style="margin-top:auto">
+          <span>Fuentes: ENARGAS · Servicio Meteorológico Nacional</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<div id="hud">
+  <span class="count"><span id="cur">1</span> / <span id="tot">26</span></span>
+  <div class="nav">
+    <button id="prev" title="Anterior">‹</button>
+    <button id="next" title="Siguiente">›</button>
+  </div>
+</div>
+<div id="tip"><kbd>←</kbd> <kbd>→</kbd> navegar · <kbd>F</kbd> pantalla completa · <kbd>Inicio/Fin</kbd> saltar</div>
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const stage  = document.getElementById('stage');
+  const bar    = document.getElementById('bar');
+  const curEl  = document.getElementById('cur');
+  const totEl  = document.getElementById('tot');
+  let idx = 0;
+  totEl.textContent = slides.length;
+
+  function show(n, dir){
+    n = Math.max(0, Math.min(slides.length-1, n));
+    if(n === idx && slides[n].classList.contains('active')) return;
+    slides.forEach(s => s.classList.remove('active','is-next','is-prev'));
+    const s = slides[n];
+    s.classList.add('active', dir === -1 ? 'is-prev' : 'is-next');
+    idx = n;
+    curEl.textContent = idx+1;
+    bar.style.width = ((idx+1)/slides.length*100) + '%';
+    location.hash = 's' + (idx+1);
+  }
+  function next(){ show(idx+1, 1); }
+  function prev(){ show(idx-1, -1); }
+
+  // escalado responsivo manteniendo 1280x720
+  function fit(){
+    const m = 0; // sin margen extra, el viewport ya centra
+    const sx = window.innerWidth  / 1280;
+    const sy = window.innerHeight / 720;
+    const scale = Math.min(sx, sy) * 0.94;
+    stage.style.transform = 'scale(' + scale + ')';
+  }
+  window.addEventListener('resize', fit);
+  fit();
+
+  document.addEventListener('keydown', e => {
+    if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){ e.preventDefault(); next(); }
+    else if(['ArrowLeft','PageUp'].includes(e.key)){ e.preventDefault(); prev(); }
+    else if(e.key === 'Home'){ e.preventDefault(); show(0,-1); }
+    else if(e.key === 'End'){ e.preventDefault(); show(slides.length-1,1); }
+    else if(e.key === 'f' || e.key === 'F'){
+      if(!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+
+  document.getElementById('next').addEventListener('click', next);
+  document.getElementById('prev').addEventListener('click', prev);
+
+  // avance con click en el slide (no en botones ni links)
+  stage.addEventListener('click', e => {
+    if(e.target.closest('a,button')) return;
+    next();
+  });
+
+  // swipe en táctil
+  let tx=0;
+  stage.addEventListener('touchstart', e => tx = e.touches[0].clientX, {passive:true});
+  stage.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if(Math.abs(dx) > 50){ dx < 0 ? next() : prev(); }
+  });
+
+  // arranca según hash (#s3) si existe
+  const m = (location.hash.match(/^#s(\d+)$/));
+  if(m){ const k = parseInt(m[1],10)-1; if(k>=0 && k<slides.length){ idx=k; } }
+  show(idx, 1);
+})();
+</script>
+</body>
+</html>

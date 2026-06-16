@@ -15,7 +15,7 @@ Genera:
   tables/sumas_exponencial.tex, tables/coeficientes.tex, tables/metricas.tex,
   tables/estimacion_final.tex
 
-E imprime por pantalla todos los valores numéricos para completar draft.tex.
+E imprime por pantalla todos los valores numéricos para completar tp.tex.
 """
 
 import csv
@@ -298,7 +298,7 @@ def linea(*a):
     print(*a)
 
 print("=" * 64)
-print("VALORES PARA COMPLETAR draft.tex")
+print("VALORES PARA COMPLETAR tp.tex")
 print("=" * 64)
 print(f"n = {n}")
 print(f"T0 = {T0:.0f} °C   (rango observado: {Tmin:.2f} a {Tmax:.2f} °C)")

@@ -1,5 +1,5 @@
-# PDF generado (se compila desde draft.tex)
-draft.pdf
+# PDF generado (se compila desde tp.tex)
+tp.pdf
 
 # Entorno virtual de Python (pesado y específico de la máquina)
 .venv/

@@ -43,7 +43,7 @@ python analisis.py         # genera figures/ y tables/
 Luego se compila el informe:
 
 ```bash
-latexmk -pdf draft.tex
+latexmk -pdf tp.tex
 ```
 
 ## Estructura
@@ -51,7 +51,8 @@ latexmk -pdf draft.tex
 ```
 procesar_datos.py   construcción del dataset (cruce de fuentes)
 analisis.py         ajuste, métricas, figuras y tablas
-draft.tex           informe en LaTeX
+tp.tex              informe en LaTeX
+presentacion.html   presentación (HTML, un solo archivo)
 dataset.csv         datos finales (fecha, T, D)
 figures/            nube de puntos, modelos ajustados, residuos
 tables/             tablas .tex (sumas, coeficientes, métricas, etc.)
