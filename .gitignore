@@ -15,6 +15,9 @@ tp.pdf
 *.fdb_latexmk
 *.synctex.gz
 
+
+dist/
+
 # Python
 __pycache__/
 *.pyc

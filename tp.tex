@@ -10,7 +10,7 @@
 \usepackage{lmodern}
 \usepackage{microtype}
 
-\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage[a4paper,top=3.0cm,bottom=2.5cm,left=2.5cm,right=2.5cm,headheight=38pt,headsep=0.65cm]{geometry}
 \usepackage{setspace}
 \onehalfspacing
 
@@ -32,6 +32,7 @@
 \usepackage{array}
 \usepackage{longtable}
 \usepackage{multirow}
+\usepackage{tabularx}
 
 \usepackage{xcolor}
 \usepackage[most]{tcolorbox}
@@ -52,6 +53,8 @@
 % ============================================================
 
 \definecolor{utnblue}{HTML}{003A70}
+\definecolor{utnred}{HTML}{C8102E}
+\definecolor{utnbrown}{HTML}{24130E}
 \definecolor{softblue}{HTML}{EAF3FF}
 \definecolor{softgray}{HTML}{F5F5F5}
 \definecolor{darkgray}{HTML}{333333}
@@ -82,11 +85,29 @@
 % ENCABEZADO Y PIE
 % ============================================================
 
+\newcommand{\utnlogo}{logo-utn-frba-1.png}
+\newcommand{\linkPresentacion}{https://youtu.be/oGs5gnDfWcA?si=8vU9Bn-2B6IV6T6-}
+\newcommand{\linkRepositorio}{https://github.com/alexFiorenza/aproximacion_discreta_an}
+\newcommand{\enlaceRepositorio}{\href{\linkRepositorio}{\nolinkurl{\linkRepositorio}}}
+
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{Análisis Numérico}
-\rhead{Aproximación discreta}
+\lhead{\includegraphics[height=0.82cm]{\utnlogo}}
+\chead{\small\textbf{Análisis Numérico}\\[-1mm]\scriptsize Aproximación discreta por mínimos cuadrados}
+\rhead{\small UTN FRBA}
 \cfoot{\thepage\ de \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{%
+    \fancyhf{}
+    \lhead{\includegraphics[height=0.82cm]{\utnlogo}}
+    \chead{\small\textbf{Análisis Numérico}\\[-1mm]\scriptsize Aproximación discreta por mínimos cuadrados}
+    \rhead{\small UTN FRBA}
+    \cfoot{\thepage\ de \pageref{LastPage}}
+    \renewcommand{\headrulewidth}{0.4pt}
+    \renewcommand{\footrulewidth}{0pt}
+}
 
 % ============================================================
 % COMANDOS ÚTILES
@@ -102,39 +123,101 @@
 \newcommand{\modeloExponencial}{f_3(T)=Ae^{BT}}
 
 % ============================================================
-% DATOS DEL TRABAJO
+% DATOS DEL TRABAJO Y CARÁTULA
 % ============================================================
 
-\title{
-    \vspace{-1cm}
-    \textbf{\Large Aproximación discreta por mínimos cuadrados}\\[0.3cm]
-    \large Demanda prioritaria de gas natural en función de la temperatura media
-}
+\newcommand{\tituloTrabajo}{Aproximación discreta por mínimos cuadrados}
+\newcommand{\subtituloTrabajo}{Demanda prioritaria de gas natural en función de la temperatura media}
+\newcommand{\asignatura}{Análisis Numérico}
+\newcommand{\universidad}{Universidad Tecnológica Nacional}
+\newcommand{\facultad}{Facultad Regional Buenos Aires}
 
-\author{
-\begin{tabular}{ll}
+\newcommand{\makecaratula}{%
+\begin{titlepage}
+\thispagestyle{empty}
+\centering
+
+\vspace*{0.2cm}
+\includegraphics[width=0.74\textwidth]{\utnlogo}\par
+
+\vspace{1.15cm}
+{\color{utnred}\rule{0.92\textwidth}{1.2pt}}\par
+\vspace{0.55cm}
+{\Large\bfseries \asignatura\par}
+\vspace{0.35cm}
+{\huge\bfseries \tituloTrabajo\par}
+\vspace{0.35cm}
+{\Large \subtituloTrabajo\par}
+\vspace{0.55cm}
+{\color{utnred}\rule{0.68\textwidth}{0.8pt}}\par
+
+\vspace{0.9cm}
+\begin{tcolorbox}[
+    width=0.82\textwidth,
+    colback=softgray,
+    colframe=utnred,
+    arc=2mm,
+    boxrule=0.8pt,
+    left=3mm,
+    right=3mm,
+    top=2mm,
+    bottom=2mm
+]
+\centering
+\textbf{Presentación del trabajo práctico}\\[1mm]
+\href{\linkPresentacion}{\nolinkurl{\linkPresentacion}}\\[3mm]
+\textbf{Código fuente, datos y material complementario}\\[1mm]
+\enlaceRepositorio
+\end{tcolorbox}
+
+\vfill
+
+\begin{minipage}{0.86\textwidth}
+\begin{tabularx}{\textwidth}{@{}>{\bfseries}l X@{}}
+Universidad & \universidad \\
+Facultad & \facultad \\
+Asignatura & \asignatura \\
+Fecha & \today \\
+\end{tabularx}
+\end{minipage}
+
+\vspace{0.85cm}
+
+\begin{minipage}{0.86\textwidth}
+\textbf{Integrantes}\\[2mm]
+\begin{tabularx}{\textwidth}{@{}l X@{}}
 Alex Fiorenza & \href{mailto:afiorenza@frba.utn.edu.ar}{afiorenza@frba.utn.edu.ar}\\
 Valentina Veron & \href{mailto:vveron@frba.utn.edu.ar}{vveron@frba.utn.edu.ar}\\
 Juan Francisco Aldaco & \href{mailto:jaldaco@frba.utn.edu.ar}{jaldaco@frba.utn.edu.ar}\\
 Francisco Fernando Garcia & \href{mailto:frgarcia@frba.utn.edu.ar}{frgarcia@frba.utn.edu.ar}\\
 Franco Uriel Schendel & \href{mailto:fschendel@frba.utn.edu.ar}{fschendel@frba.utn.edu.ar}\\
-Felipe Fernández Presedo & \href{mailto:ffernandezpresedo@frba.utn.edu.ar}{ffernandezpresedo@frba.utn.edu.ar}
-\end{tabular}
-}
+Felipe Fernández Presedo & \href{mailto:ffernandezpresedo@frba.utn.edu.ar}{ffernandezpresedo@frba.utn.edu.ar}\\
+\end{tabularx}
+\end{minipage}
 
-\date{
-    Universidad Tecnológica Nacional -- Facultad Regional Buenos Aires\\
-    Análisis Numérico\\
-    \today
+\vfill
+
+{\small \universidad{} -- \facultad\par}
+\end{titlepage}
 }
 
 \begin{document}
 
-\maketitle
+\makecaratula
 
 \begin{abstract}
 En este trabajo se aplica el método de mínimos cuadrados a un conjunto de datos discretos reales para estudiar la relación entre la temperatura media diaria y la demanda prioritaria de gas natural. Se ajustan tres modelos: lineal, cuadrático y exponencial. El modelo exponencial se incorpora como modelo no polinómico y se resuelve mediante una transformación logarítmica. Luego se comparan los modelos mediante métricas de error y se utiliza el modelo seleccionado para estimar la demanda correspondiente a una temperatura media dada.
 \end{abstract}
+
+\begin{importantbox}
+\textbf{Presentación del trabajo práctico.} El material audiovisual asociado al informe se encuentra disponible en:\\
+\href{\linkPresentacion}{\nolinkurl{\linkPresentacion}}
+\end{importantbox}
+
+\begin{importantbox}
+\textbf{Repositorio del trabajo.} Los datos, tablas, figuras y material complementario de este informe están disponibles en:\\
+\enlaceRepositorio
+\end{importantbox}
 
 \begin{importantbox}
 \textbf{Nota metodológica.} La fuente de ENARGAS publica valores de demanda prioritaria, algunos de los cuales pueden corresponder a estimaciones operativas. En este trabajo no se pretende reproducir el modelo oficial de ENARGAS, sino construir una aproximación matemática simplificada mediante mínimos cuadrados, utilizando la temperatura media como variable explicativa.
@@ -228,7 +311,7 @@ La temperatura media diaria se incorpora desde una segunda fuente de datos meteo
     T_{\text{media}} = \frac{T_{\max} + T_{\min}}{2}
 \]
 
-La temperatura media diaria de cada estación se calcula según la expresión anterior, a partir del registro diario del Servicio Meteorológico Nacional. Para obtener un valor representativo del Gran Buenos Aires, se promedió dicha temperatura media sobre las principales estaciones del Área Metropolitana (Aeroparque, Observatorio Central de Buenos Aires, Ezeiza, El Palomar, Morón, San Fernando, Campo de Mayo y La Plata). Finalmente, se unen ambos conjuntos por fecha, conservando únicamente los días con registros completos en ambas fuentes.
+La temperatura media diaria de cada estación se calcula según la expresión anterior, a partir del registro diario del Servicio Meteorológico Nacional. Para obtener un valor representativo del Gran Buenos Aires, se promedió dicha temperatura media sobre las principales estaciones del Área Metropolitana (Aeroparque, Observatorio Central de Buenos Aires, Ezeiza, El Palomar, Morón, San Fernando, Campo de Mayo y La Plata). Finalmente, se unen ambos conjuntos por fecha, conservando únicamente los días con registros completos en ambas fuentes. El dataset resultante puede consultarse en \enlaceRepositorio{}.
 
 % ============================================================
 \section{Tabla de datos}
@@ -319,6 +402,7 @@ b
 \begin{table}[H]
 \centering
 \caption{Sumas utilizadas en el ajuste lineal}
+\label{tab:sumas-lineal}
 \input{tables/sumas_lineal.tex}
 \end{table}
 
@@ -412,6 +496,7 @@ c
 \begin{table}[H]
 \centering
 \caption{Sumas utilizadas en el ajuste cuadrático}
+\label{tab:sumas-cuadratico}
 \input{tables/sumas_cuadratico.tex}
 \end{table}
 
@@ -534,6 +619,7 @@ B
 \begin{table}[H]
 \centering
 \caption{Sumas utilizadas en el ajuste exponencial}
+\label{tab:sumas-exponencial}
 \input{tables/sumas_exponencial.tex}
 \end{table}
 
@@ -727,6 +813,9 @@ La confiabilidad de esta estimación depende de que \(T_0\) se encuentre dentro 
 
     \item Servicio Meteorológico Nacional. Datos meteorológicos y registros de temperatura.\\
     \url{https://datos.gob.ar/dataset/smn-datos-meteorologicos-horarios}
+
+    \item Fiorenza, A.; et al. \textit{Aproximación discreta por mínimos cuadrados} --- repositorio con código fuente, datos, tablas y figuras del trabajo práctico.\\
+    \url{https://github.com/alexFiorenza/aproximacion_discreta_an}
 \end{itemize}
 
 \end{document}
